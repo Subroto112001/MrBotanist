@@ -272,8 +272,9 @@ function App() {
   };
 
   // Wikipedia data fetch function
+  // Modified searchPlant function to support Bengali
   const searchPlant = async (e) => {
-    if (e) e.preventDefault(); // Check if e exists (for button click)
+    if (e) e.preventDefault();
     if (!query) return;
 
     setLoading(true);
@@ -282,14 +283,51 @@ function App() {
     setScientificName("");
     setTaxonomy(null);
 
+    // আমরা একটি নতুন ভেরিয়েবল নিচ্ছি, কারণ 'query' স্টেট আমরা সরাসরি বদলাবো না
+    let searchQuery = query;
+
     try {
-      // নোট: আমরা সর্বদা ইংরেজি উইকিপিডিয়া ব্যবহার করছি ভালো তথ্যের জন্য, কিন্তু UI অনুবাদ হবে।
+      // ধাপ ১: ইনপুটটি বাংলা কি না তা চেক করা (Regex ব্যবহার করে)
+      const isBengali = /[\u0980-\u09FF]/.test(query);
+
+      if (isBengali) {
+        // যদি বাংলা হয়, তবে বাংলা উইকিপিডিয়া থেকে ইংরেজি টাইটেল খুঁজে বের করা
+        const bnUrl = "https://bn.wikipedia.org/w/api.php";
+        const bnParams = {
+          action: "query",
+          format: "json",
+          prop: "langlinks",
+          lllang: "en", // আমাদের ইংরেজি লিংক দরকার
+          titles: query,
+          redirects: 1,
+          origin: "*",
+        };
+
+        const bnResponse = await axios.get(bnUrl, { params: bnParams });
+        const bnPages = bnResponse.data.query.pages;
+        const bnPageId = Object.keys(bnPages)[0];
+
+        if (bnPageId === "-1") {
+          throw new Error("not_found_bn");
+        }
+
+        const englishTitle = bnPages[bnPageId].langlinks?.[0]?.["*"];
+
+        if (englishTitle) {
+          searchQuery = englishTitle; // যেমন: 'আম' ইনপুট দিলে এখানে 'Mango' সেট হবে
+        } else {
+          // বাংলা পেজ আছে কিন্তু ইংরেজি লিংক নেই
+          throw new Error("no_english_link");
+        }
+      }
+
+      // ধাপ ২: ইংরেজি নাম (searchQuery) দিয়ে মেইন ডাটা ফেচ করা (আপনার আগের লজিক)
       const url = `https://en.wikipedia.org/w/api.php`;
       const params = {
         action: "query",
         format: "json",
         prop: "extracts|pageimages|pageprops",
-        titles: query,
+        titles: searchQuery, // এখানে query এর বদলে searchQuery ব্যবহার করছি
         pithumbsize: 600,
         exintro: true,
         explaintext: true,
@@ -363,7 +401,22 @@ function App() {
         );
       }
     } catch (err) {
-      setError(translations.status.errorNetwork[lang]);
+      // এরর হ্যান্ডলিং কাস্টমাইজ করা হয়েছে
+      if (err.message === "not_found_bn") {
+        setError(
+          lang === "bn"
+            ? "বাংলা উইকিপিডিয়ায় এই উদ্ভিদটি পাওয়া যায়নি।"
+            : "Plant not found in Bengali Wikipedia."
+        );
+      } else if (err.message === "no_english_link") {
+        setError(
+          lang === "bn"
+            ? "দুঃখিত, এই উদ্ভিদের ইংরেজি তথ্য বা বৈজ্ঞানিক নাম ডাটাবেসে নেই।"
+            : "Sorry, English data/Scientific name not linked for this item."
+        );
+      } else {
+        setError(translations.status.errorNetwork[lang]);
+      }
     } finally {
       setLoading(false);
     }
