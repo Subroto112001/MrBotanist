@@ -1,0 +1,13 @@
+@import "tailwindcss";
+
+:root {
+  --brand-light: "#ecfdf5";
+  --brand-default: "#059669";
+  --brand-dark: "#064e3b";
+}
+
+@theme{
+ --brand-light: var(--brand-light);
+  --brand-default: var(--brand-default);
+  --brand-dark: var(--brand-dark);
+}
