@@ -12,6 +12,7 @@ import {
   Network,
   ChevronRight,
   Languages,
+  Home,
 } from "lucide-react";
 
 // ---Translation Dictionary ---
@@ -253,7 +254,7 @@ function App() {
     }
   };
 
-  // ১. Taxon Rank ফাংশনটি আপডেট করুন (Division যোগ করা হয়েছে)
+  // Update the Taxon Rank function (Division added)
   const getTaxonRank = async (rankId) => {
     if (!rankId) return null;
 
@@ -283,21 +284,21 @@ function App() {
     setScientificName("");
     setTaxonomy(null);
 
-    // আমরা একটি নতুন ভেরিয়েবল নিচ্ছি, কারণ 'query' স্টেট আমরা সরাসরি বদলাবো না
+    // We create a new variable because we won't directly modify the 'query' state
     let searchQuery = query;
 
     try {
-      // ধাপ ১: ইনপুটটি বাংলা কি না তা চেক করা (Regex ব্যবহার করে)
+      // step 1 : Check if input is Bengali (using Regex)
       const isBengali = /[\u0980-\u09FF]/.test(query);
 
+      // If input is Bengali, fetch the English title from Bengali Wikipedia
       if (isBengali) {
-        // যদি বাংলা হয়, তবে বাংলা উইকিপিডিয়া থেকে ইংরেজি টাইটেল খুঁজে বের করা
         const bnUrl = "https://bn.wikipedia.org/w/api.php";
         const bnParams = {
           action: "query",
           format: "json",
           prop: "langlinks",
-          lllang: "en", // আমাদের ইংরেজি লিংক দরকার
+          lllang: "en", // We need the English link
           titles: query,
           redirects: 1,
           origin: "*",
@@ -314,20 +315,20 @@ function App() {
         const englishTitle = bnPages[bnPageId].langlinks?.[0]?.["*"];
 
         if (englishTitle) {
-          searchQuery = englishTitle; // যেমন: 'আম' ইনপুট দিলে এখানে 'Mango' সেট হবে
+          searchQuery = englishTitle;
         } else {
-          // বাংলা পেজ আছে কিন্তু ইংরেজি লিংক নেই
+          // Bengali page exists but no English link
           throw new Error("no_english_link");
         }
       }
 
-      // ধাপ ২: ইংরেজি নাম (searchQuery) দিয়ে মেইন ডাটা ফেচ করা (আপনার আগের লজিক)
+      // step 2 : Now fetch from English Wikipedia using the (possibly) updated searchQuery
       const url = `https://en.wikipedia.org/w/api.php`;
       const params = {
         action: "query",
         format: "json",
         prop: "extracts|pageimages|pageprops",
-        titles: searchQuery, // এখানে query এর বদলে searchQuery ব্যবহার করছি
+        titles: searchQuery,
         pithumbsize: 600,
         exintro: true,
         explaintext: true,
@@ -345,7 +346,7 @@ function App() {
         const data = pages[pageId];
         setPlantData(data);
 
-        // বৈজ্ঞানিক নাম বের করার লজিক
+        // Scientific Name Extraction Logic
         let scientificNameFound = "";
         let wikidataId = null;
 
@@ -401,7 +402,6 @@ function App() {
         );
       }
     } catch (err) {
-      // এরর হ্যান্ডলিং কাস্টমাইজ করা হয়েছে
       if (err.message === "not_found_bn") {
         setError(
           lang === "bn"
@@ -434,6 +434,7 @@ function App() {
       {/* --- Header --- */}
       <header className="bg-gradient-to-r from-emerald-600 via-teal-600 to-green-600 text-white shadow-lg sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
+          {/* --- Logo Section --- */}
           <div className="flex items-center gap-2">
             <Leaf size={32} className="text-emerald-200 animate-pulse" />
             <div>
@@ -449,21 +450,35 @@ function App() {
           <div className="flex items-center gap-4">
             {/* --- Navigation (Desktop) --- */}
             <nav className="hidden md:flex gap-6 text-sm font-medium">
-              <a href="#" className="hover:text-emerald-200 transition">
-                {translations.header.navHome[lang]}
+              {/* Home Link */}
+              <a
+                href="#"
+                className="flex items-center gap-1.5 hover:text-emerald-200 transition"
+              >
+                <Home size={18} />
+                <span>{translations.header.navHome[lang]}</span>
               </a>
-              <a href="#search" className="hover:text-emerald-200 transition">
-                {translations.header.navSearch[lang]}
+
+              {/* Search Link */}
+              <a
+                href="#search"
+                className="flex items-center gap-1.5 hover:text-emerald-200 transition"
+              >
+                <Search size={18} />
+                <span>{translations.header.navSearch[lang]}</span>
               </a>
+
+              {/* Resources Link */}
               <a
                 href="#resources"
-                className="hover:text-emerald-200 transition"
+                className="flex items-center gap-1.5 hover:text-emerald-200 transition"
               >
-                {translations.header.navResources[lang]}
+                <BookOpen size={18} />
+                <span>{translations.header.navResources[lang]}</span>
               </a>
             </nav>
 
-            {/* ---  Language Toggle Button --- */}
+            {/* --- Language Toggle Button --- */}
             <button
               onClick={toggleLanguage}
               className="flex items-center gap-2 bg-white/20 hover:bg-white/30 text-white px-3 py-1.5 rounded-full transition-all text-xs md:text-sm font-semibold border border-white/10 backdrop-blur-sm"
@@ -476,7 +491,10 @@ function App() {
       </header>
 
       {/* --- Hero and Search Section --- */}
-      <section id="search" className="container mx-auto px-4 py-12 max-w-6xl">
+      <section
+        id="search"
+        className="container mx-auto px-4 py-12 max-w-6xl scroll-mt-28"
+      >
         <div className="text-center mb-10">
           <h2 className="text-3xl md:text-5xl font-bold text-emerald-700 mb-4 font-serif">
             {translations.hero.title[lang]}
@@ -692,7 +710,7 @@ function App() {
       {/* --- Resources Section --- */}
       <section
         id="resources"
-        className="bg-gradient-to-b from-white via-emerald-50 to-teal-50 py-20"
+        className="bg-gradient-to-b from-white via-emerald-50 to-teal-50 py-20 scroll-mt-28"
       >
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
@@ -751,7 +769,7 @@ function App() {
           </p>
           <div className="inline-block bg-white/10 px-6 py-2 rounded-full backdrop-blur-sm">
             <p className="text-sm">
-              {translations.footer.developed[lang]}{" "}
+              {translations.footer.developed[lang]}{" "}-{" "}
               <a
                 target="_blank"
                 href="http://skbarman.me/"
