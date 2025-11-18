@@ -33,7 +33,7 @@ const translations = {
     },
     description: {
       bn: "যেকোনো উদ্ভিদের নাম অথবা বৈজ্ঞানিক নাম লিখে সার্চ করুন এবং বিস্তারিত জানুন।",
-      en: "Search by English name or Scientific name of any plant to get details.",
+      en: "Search by Name or Scientific name of any plant to get details.",
     },
     subdescription: {
       bn: "শ্রেণীবিন্যাস দেখতে বৈজ্ঞানিক নাম দিয়ে সার্চ করুন।",
