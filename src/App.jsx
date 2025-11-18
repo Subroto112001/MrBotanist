@@ -35,6 +35,10 @@ const translations = {
       bn: "যেকোনো উদ্ভিদের ইংরেজি নাম অথবা বৈজ্ঞানিক নাম লিখে সার্চ করুন এবং বিস্তারিত জানুন।",
       en: "Search by English name or Scientific name of any plant to get details.",
     },
+    subdescription: {
+      bn: "শ্রেণীবিন্যাস দেখতে বৈজ্ঞানিক নাম দিয়ে সার্চ করুন।",
+      en: "Search by scientific name to view taxonomy.",
+    },
     placeholder: {
       bn: "অনুসন্ধান করুন (যেমন: Mango, Mangifera indica...)",
       en: "Search here (e.g., Mango, Mangifera indica...)",
@@ -201,7 +205,8 @@ function App() {
     const visited = new Set();
 
     try {
-      while (currentId && visited.size < 10) {
+      // লুপ লিমিট বাড়িয়ে ১৫ করা হয়েছে যাতে Kingdom পর্যন্ত পৌঁছাতে পারে
+      while (currentId && visited.size < 15) {
         if (visited.has(currentId)) break;
         visited.add(currentId);
 
@@ -220,18 +225,23 @@ function App() {
         if (!entity) break;
 
         const claims = entity.claims;
+        // বৈজ্ঞানিক নাম বা লেবেল নেওয়া
         const label = entity.labels?.en?.value;
 
-        // Get taxon rank (P105)
-        const rankId = claims.P105?.[0]?.mainsnak.datavalue?.value?.id;
+        // Rank বের করা (P105)
+        const rankId = claims.P105?.[0]?.mainsnak?.datavalue?.value?.id;
         const rank = await getTaxonRank(rankId);
 
-        if (rank && label) {
+        // যদি Rank এবং Label দুটোই থাকে, তাহলে লিস্টে যোগ করুন
+        if (rank && label && !hierarchy[rank]) {
           hierarchy[rank] = label;
         }
 
-        // Get parent taxon (P171)
-        const parentId = claims.P171?.[0]?.mainsnak.datavalue?.value?.id;
+        // Parent Taxon (P171) খোঁজা, না পেলে Subclass of (P279) দেখা
+        const parentId =
+          claims.P171?.[0]?.mainsnak?.datavalue?.value?.id ||
+          claims.P279?.[0]?.mainsnak?.datavalue?.value?.id;
+
         if (!parentId) break;
         currentId = parentId;
       }
@@ -243,7 +253,7 @@ function App() {
     }
   };
 
-  // Get taxon rank name
+  // ১. Taxon Rank ফাংশনটি আপডেট করুন (Division যোগ করা হয়েছে)
   const getTaxonRank = async (rankId) => {
     if (!rankId) return null;
 
@@ -253,7 +263,8 @@ function App() {
       Q35409: "family",
       Q36602: "order",
       Q37517: "class",
-      Q38348: "phylum",
+      Q38348: "phylum", // Zoology-তে Phylum
+      Q334460: "phylum", // Botany-তে Division (এটি মিসিং ছিল)
       Q36732: "kingdom",
     };
 
@@ -419,6 +430,9 @@ function App() {
           </h2>
           <p className="text-gray-600 text-lg">
             {translations.hero.description[lang]}
+          </p>
+          <p className="text-gray-600 text-lg">
+            {translations.hero.subdescription[lang]}
           </p>
         </div>
 
