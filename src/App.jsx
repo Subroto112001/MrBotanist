@@ -11,10 +11,10 @@ import {
   Sparkles,
   Network,
   ChevronRight,
-  Languages, // ভাষা পরিবর্তনের আইকনের জন্য
+  Languages,
 } from "lucide-react";
 
-// --- ১. ভাষা এবং অনুবাদের ডিকশনারি (Translation Dictionary) ---
+// ---Translation Dictionary ---
 const translations = {
   header: {
     title: { bn: "Mr. Botanist", en: "Mr. Botanist" },
@@ -32,7 +32,7 @@ const translations = {
       en: "Explore the Plant Kingdom",
     },
     description: {
-      bn: "যেকোনো উদ্ভিদের ইংরেজি নাম অথবা বৈজ্ঞানিক নাম লিখে সার্চ করুন এবং বিস্তারিত জানুন।",
+      bn: "যেকোনো উদ্ভিদের নাম অথবা বৈজ্ঞানিক নাম লিখে সার্চ করুন এবং বিস্তারিত জানুন।",
       en: "Search by English name or Scientific name of any plant to get details.",
     },
     subdescription: {
